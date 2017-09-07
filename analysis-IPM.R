@@ -1,4 +1,7 @@
 # IPM for Sydney Harbour population of coral Plesiastrea versipora
+# accompanies
+# How does a widespread reef coral maintain populations in isolated environments? 
+# Kristin Precoda, Andrew H. Baird, Alisha Madsen, Toni Mizerek, Brigitte Sommer, Sheena N. Su, Joshua S. Madin
 
 library("xlsx")  # for read.csv
 library("Matrix")  # for Matrix()
@@ -325,22 +328,23 @@ alltcks <- c(.35, 1, 10, 20, 50, 100, 250, 500, 1000, 1500)
 tcks <- alltcks[c(2, 3, 5:10)]    # ticks that will get labelled
 # plots of growth, survival, pr(f), pr(reproductive) functions
 xlim <- c(.5, 3.5)
-modelcolor <- "grey"
+modelcolor <- "black"
 
-pdf(file="figs/fig1.pdf", width=8, height=8, pointsize=13)
+postscript("figs/fig1.eps", horizontal=F, onefile=F, paper="special",
+           width=8, height=8, pointsize=13)
 par(mfrow=c(2, 2))
 par(mar=c(3.5, 4.5, 2, .2)+.1)
 par(mgp=c(3, 1, 0))
 plot(growth.data$size, growth.data$sizeNext, xlim=xlim, ylim=xlim,
-     asp=1, pch=4, xlab="",
+     asp=1, xlab="",
      ylab=expression(paste("Size (cm"^2, ") at time t+1")), axes=F)
 axis(1, at=tcks^(1/6), labels=paste(tcks), las=2)
 axis(2, at=tcks^(1/6), labels=paste(tcks), las=2)
-abline(a=grow.mod$coeff[1], b=grow.mod$coeff[2], col=modelcolor, lwd=2)
+abline(a=grow.mod$coeff[1], b=grow.mod$coeff[2], col=modelcolor, lwd=3)
 abline(0, 1, col="black", lty=2, lwd=2)
 legend(x="bottomright", legend=c("Growth model", "45 degrees"), 
-       col=c(modelcolor, "black"), lty=c(1, 2), lwd=c(2, 2), bty="n")
-legend(.0008^(1/6), 3800^(1/6), legend=c("a"), bty="n", xpd=NA)
+       col=c(modelcolor, "black"), lty=c(1, 2), lwd=c(3, 2), bty="n")
+legend(.0008^(1/6), 3800^(1/6), legend=c("(a)"), bty="n", xpd=NA)
 box()
 
 plot(y, surv.f(y, m=.01), ylab="Pr(survival)",
@@ -351,8 +355,8 @@ axis(2)
 par(new=T)
 set.seed(1234)
 plot(surv.data$size, surv.data$surv+rnorm(nrow(surv.data), 0, .026),
-     pch=4, xlab="", ylab="", xlim=xlim, ylim=c(-.05, 1.05), cex=.9, axes=F)
-legend(.0008^(1/6), 1.22, legend=c("b"), bty="n", xpd=NA)
+     xlab="", ylab="", xlim=xlim, ylim=c(-.05, 1.05), cex=.9, axes=F)
+legend(.0008^(1/6), 1.22, legend=c("(b)"), bty="n", xpd=NA)
 box()
 
 par(mar=c(4.5, 4.5, 1, .2)+.1)
@@ -364,9 +368,9 @@ axis(2)
 par(new=T)
 set.seed(1234)
 plot(repro.size$size, repro.size$repro+rnorm(nrow(repro.size), 0, .026),
-     pch=4, xlim=xlim, ylim=c(-.05, 1.05), cex=.9,
+     xlim=xlim, ylim=c(-.05, 1.05), cex=.9,
      xlab="", ylab="", axes=F)
-legend(.0008^(1/6), 1.22, legend=c("c"), bty="n", xpd=NA)
+legend(.0008^(1/6), 1.22, legend=c("(c)"), bty="n", xpd=NA)
 box()
 
 plot(y, Pr.female(y, tr=transformtype), ylab="Pr(female)",
@@ -377,9 +381,9 @@ axis(2)
 par(new=T)
 set.seed(1234)
 plot(sex.size$size, sex.size$sex+rnorm(nrow(sex.size), 0, .026),
-     pch=4, xlim=xlim, ylim=c(-.05, 1.05), cex=.9,
+     xlim=xlim, ylim=c(-.05, 1.05), cex=.9,
      xlab="", ylab="", axes=F)
-legend(.0008^(1/6), 1.22, legend=c("d"), bty="n", xpd=NA)
+legend(.0008^(1/6), 1.22, legend=c("(d)"), bty="n", xpd=NA)
 box()
 dev.off()
 par(mgp=c(3, 1, 0))
@@ -390,7 +394,8 @@ par(mar=c(5, 4, 4, 2)+.1)
 # note: below indices of qseq hold for qseq from 100 to 700 in 601 steps
 # (used mat.dim=800 in calculating this)
 
-pdf(file="figs/fig2.pdf", width=8, height=8, pointsize=12)
+postscript("figs/fig2.eps", horizontal=F, onefile=F, paper="special",
+           width=8, height=8, pointsize=12)
 par(mfrow=c(2, 2))
 par(mar=c(5, 3.7, 2, 4)+.1)
 plot(y[1:230], (Pr.female(y, tr=transformtype)*Pr.repro(y))[1:230],
@@ -398,7 +403,7 @@ plot(y[1:230], (Pr.female(y, tr=transformtype)*Pr.repro(y))[1:230],
      type="l", lwd=2, cex.lab=1.1, axes=F)
 axis(1, at=tcks^(1/6), labels=paste(tcks), las=2)
 axis(2)
-legend(.08^(1/6), .54, legend=c("a"), bty="n", cex=1.2, xpd=NA)
+legend(.08^(1/6), .54, legend=c("(a)"), bty="n", cex=1.2, xpd=NA)
 mtext("Probability of reproductive female", 2, line=2.7, cex=.95)
 par(new=T)
 plot(y[1:230], (qbest*Pr.female(y, tr=transformtype)*Pr.repro(y))[1:230],
@@ -420,7 +425,7 @@ abline(h=LLbest-thresh/2, lty=2)
 abline(v=qseq[which.max(ll)], lty=3)
 abline(v=qseq[108], lty=3)
 abline(v=qseq[501], lty=3)
-legend(.006, -1183, legend=c("b"), bty="n", cex=1.2, xpd=NA)
+legend(.006, -1183, legend=c("(b)"), bty="n", cex=1.2, xpd=NA)
 
 par(mar=c(5, 3.7, 2, 4)+.1)
 plot(y[1:230], (qbest*Pr.female(y, tr=transformtype)*Pr.repro(y)*ssd*y^6)[1:230],
@@ -432,7 +437,7 @@ abline(v=100^(1/6), lty=3)
 abline(v=250^(1/6), lty=3)
 mtext("Relative recruits under", 2, line=2.7, cex=.95)
 mtext("stable size distribution", 2, line=1.4, cex=.95)
-legend(.08^(1/6), .0037, legend=c("c"), bty="n", cex=1.2, xpd=NA)
+legend(.08^(1/6), .0037, legend=c("(c)"), bty="n", cex=1.2, xpd=NA)
 box()
 # end figure showing Q
 
@@ -448,7 +453,7 @@ abline(v=50^(1/6), lty=3)
 abline(v=100^(1/6), lty=3)
 abline(v=250^(1/6), lty=3)
 box()
-legend(.08^(1/6), 2.83, legend=c("d"), bty="n", cex=1.2, xpd=NA)
+legend(.08^(1/6), 2.83, legend=c("(d)"), bty="n", cex=1.2, xpd=NA)
 dev.off()
 # end plot of recruits per colony
 par(mar=c(5, 4, 4, 2)+.1)
@@ -474,8 +479,11 @@ Pvers.eigen.ciu <- get.eigen.stuff(mat.ciu)
 lambda.ciu <- Pvers.eigen.ciu[[1]]
 ssd.ciu <- as.vector(Pvers.eigen.ciu[[2]])
 
-png(file="figs/fig3.png",
-     pointsize=62, width=3000, height=3000, antialias="none")
+finalfigure <- F
+if (finalfigure) 
+  tiff("figs/fig3.tif", pointsize=48, width=2000, height=2000, antialias="none", compression="lzw")
+if (!finalfigure) 
+  png(file="figs/fig3.png", pointsize=62, width=2500, height=2500, antialias="none")
 par(mfrow=c(2, 2))
 par(mar=c(5, 4.5, 1.5, 3.5)+.1)
 plot(M$meshpts, ssd, type='l', lwd=2, lty=4,
@@ -496,7 +504,7 @@ axis(4, at=seq(0, 2, by=.2))
 mtext("Empirical size structure", 4, line=2.2, cex=0.85)
 abline(v=transformSize(minreliablesize, transformtype), col="black",
        lwd=2, lty=3)
-legend(.0008^(1/6), 2.7, legend=c("a"), bty="n", cex=1.2, xpd=NA)
+legend(.08^(1/6), 2.7, legend=c("(a)"), bty="n", cex=1.2, xpd=NA)
 par(mar=c(5, 4, 4, 2)+.1)
 # end: figure showing stable size distribution & empirical size structure
 
@@ -518,7 +526,7 @@ lines(x=c(y[1], y.broaden.recruits[length(y.broaden.recruits)]),
 lines(y=c(y[1], y.broaden.recruits[length(y.broaden.recruits)]),
       x=rep(y[1], 2), col="white", lwd=1)
 abline(a=0, b=1, col="white", lty=3, lwd=1.5)
-legend(.08^(1/6), 3100^(1/6), legend=c("b"), bty="n", cex=1.2, xpd=NA)
+legend(.08^(1/6), 3100^(1/6), legend=c("(b)"), bty="n", cex=1.2, xpd=NA)
 # end plot kernel matrix (K in literature; mat here)
 
 # plot elasticity & sensitivity: with recruits emphasized and diagonal line
@@ -542,7 +550,7 @@ lines(x=c(y[1], y.broaden.recruits[length(y.broaden.recruits)]),
 lines(y=c(y[1], y.broaden.recruits[length(y.broaden.recruits)]),
       x=rep(y[1], 2), col="white", lwd=1)
 abline(a=0, b=1, col="black", lty=3, lwd=1.5)
-legend(.08^(1/6), 3100^(1/6), legend=c("c"), bty="n", cex=1.2, xpd=NA)
+legend(.08^(1/6), 3100^(1/6), legend=c("(c)"), bty="n", cex=1.2, xpd=NA)
 
 image(y.broaden.recruits, y.broaden.recruits,
            t(log(elas))[broaden.recruits, broaden.recruits],
@@ -558,12 +566,13 @@ lines(x=c(y[1], y.broaden.recruits[length(y.broaden.recruits)]),
 lines(y=c(y[1], y.broaden.recruits[length(y.broaden.recruits)]),
       x=rep(y[1], 2), col="white", lwd=1)
 abline(a=0, b=1, col="white", lty=3, lwd=1.5)
-legend(.08^(1/6), 3100^(1/6), legend=c("d"), bty="n", cex=1.2, xpd=NA)
+legend(.08^(1/6), 3100^(1/6), legend=c("(d)"), bty="n", cex=1.2, xpd=NA)
 dev.off()
 # end plot elasticity & sensitivity: with recruits emphasized
 
 # plot elasticity results for each param
-pdf(file="figs/figS2.pdf", width=6, height=3.5, pointsize=10)
+postscript("figs/fig2A.eps", horizontal=F, onefile=F, paper="special",
+           width=6, height=3.5, pointsize=10)
 par(mfrow=c(1, 2))
 par(mar=c(9.5, 4, 1, 1)+.1)
 x <- rep(1:nparams, each=2)
@@ -582,7 +591,7 @@ param.labels <- c("Growth intercept", "Growth slope", "Growth variance",
                   "Sex intercept", "Sex slope", "Reproduction intercept",
                   "Reproduction slope", "Q")
 axis(1, labels=param.labels[param.order], at=1:nparams, padj=0, las=3)
-legend(.56, 1.189, legend=c("a"), bty="n", cex=1.2, xpd=NA)
+legend(.56, 1.189, legend=c("(a)"), bty="n", cex=1.2, xpd=NA)
 par(mar=c(5, 4, 1, 1)+.1)
 
 plot(y[-1], ssd.sn[1, -1], ylim=c(0, max(ssd.sn[, -1])),
@@ -601,7 +610,7 @@ for (i in 1:(nparams*2)) {
   if (i < 3 || i > 4)
     plot(y[-1], ssd.sn[i, -1], type="l", axes=F, xlab="", ylab="")
 }
-legend(.08^(1/6), .00955, legend=c("b"), bty="n", cex=1.2, xpd=NA)
+legend(.08^(1/6), .00955, legend=c("(b)"), bty="n", cex=1.2, xpd=NA)
 box()
 dev.off()
 par(mar=c(5, 4, 4, 2)+.1)
