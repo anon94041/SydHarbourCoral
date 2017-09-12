@@ -484,6 +484,11 @@ if (finalfigure)
   tiff("figs/fig3.tif", pointsize=48, width=2000, height=2000, antialias="none", compression="lzw")
 if (!finalfigure) 
   png(file="figs/fig3.png", pointsize=62, width=2500, height=2500, antialias="none")
+colorfigure <- F
+if (colorfigure)
+  colshades <- tim.colors()
+if (!colorfigure)
+  colshades <- grey.colors(33,start=.9,end=0.1)
 par(mfrow=c(2, 2))
 par(mar=c(5, 4.5, 1.5, 3.5)+.1)
 plot(M$meshpts, ssd, type='l', lwd=2, lty=4,
@@ -517,7 +522,7 @@ image(y.broaden.recruits, y.broaden.recruits,
       t(log(mat))[broaden.recruits, broaden.recruits],
       xlab=expression(paste("Size (cm"^2, ") at time t")),
       ylab=expression(paste("Size (cm"^2, ") at time t+1")),
-      col=tim.colors(),
+      col=colshades,
       axes=F, asp=1)
 axis(1, at=alltcks^(1/6), labels=paste(alltcks), las=2)
 axis(2, at=alltcks^(1/6), labels=paste(alltcks), las=2)
@@ -525,7 +530,7 @@ lines(x=c(y[1], y.broaden.recruits[length(y.broaden.recruits)]),
       y=rep(y[1], 2), col="white", lwd=1)
 lines(y=c(y[1], y.broaden.recruits[length(y.broaden.recruits)]),
       x=rep(y[1], 2), col="white", lwd=1)
-abline(a=0, b=1, col="white", lty=3, lwd=1.5)
+abline(a=0, b=1, col="white", lty=1, lwd=1.5)
 legend(.08^(1/6), 3100^(1/6), legend=c("(b)"), bty="n", cex=1.2, xpd=NA)
 # end plot kernel matrix (K in literature; mat here)
 
@@ -541,7 +546,7 @@ image(y.broaden.recruits, y.broaden.recruits,
       t(log(sens))[broaden.recruits, broaden.recruits],
       xlab=expression(paste("Size (cm"^2, ") at time t")),
       ylab=expression(paste("Size (cm"^2, ") at time t+1")),
-      col=tim.colors(),
+      col=colshades,
       axes=F, asp=1)
 axis(1, at=alltcks^(1/6), labels=paste(alltcks), las=2)
 axis(2, at=alltcks^(1/6), labels=paste(alltcks), las=2)
@@ -549,14 +554,14 @@ lines(x=c(y[1], y.broaden.recruits[length(y.broaden.recruits)]),
       y=rep(y[1], 2), col="white", lwd=1)
 lines(y=c(y[1], y.broaden.recruits[length(y.broaden.recruits)]),
       x=rep(y[1], 2), col="white", lwd=1)
-abline(a=0, b=1, col="black", lty=3, lwd=1.5)
+abline(a=0, b=1, col="white", lty=1, lwd=1.5)
 legend(.08^(1/6), 3100^(1/6), legend=c("(c)"), bty="n", cex=1.2, xpd=NA)
 
 image(y.broaden.recruits, y.broaden.recruits,
            t(log(elas))[broaden.recruits, broaden.recruits],
       xlab=expression(paste("Size (cm"^2, ") at time t")),
       ylab=expression(paste("Size (cm"^2, ") at time t+1")),
-      col=tim.colors(),
+      col=colshades,
       axes=F, asp=1)
 axis(1, at=alltcks^(1/6), labels=paste(alltcks), las=2)
 axis(2, at=alltcks^(1/6), labels=paste(alltcks), las=2)
@@ -565,7 +570,7 @@ lines(x=c(y[1], y.broaden.recruits[length(y.broaden.recruits)]),
       y=rep(y[1], 2), col="white", lwd=1)
 lines(y=c(y[1], y.broaden.recruits[length(y.broaden.recruits)]),
       x=rep(y[1], 2), col="white", lwd=1)
-abline(a=0, b=1, col="white", lty=3, lwd=1.5)
+abline(a=0, b=1, col="white", lty=1, lwd=1.5)
 legend(.08^(1/6), 3100^(1/6), legend=c("(d)"), bty="n", cex=1.2, xpd=NA)
 dev.off()
 # end plot elasticity & sensitivity: with recruits emphasized
