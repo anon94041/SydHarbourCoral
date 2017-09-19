@@ -484,7 +484,7 @@ if (finalfigure)
   tiff("figs/fig3.tif", pointsize=48, width=2000, height=2000, antialias="none", compression="lzw")
 if (!finalfigure) 
   png(file="figs/fig3.png", pointsize=62, width=2500, height=2500, antialias="none")
-colorfigure <- F
+colorfigure <- T
 if (colorfigure)
   colshades <- tim.colors()
 if (!colorfigure)
