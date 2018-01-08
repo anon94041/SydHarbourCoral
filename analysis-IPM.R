@@ -1,6 +1,6 @@
 # IPM for Sydney Harbour population of coral Plesiastrea versipora
 # accompanies
-# How does a widespread reef coral maintain populations in isolated environments? 
+# How does a widespread reef coral maintain a population in an isolated environment? 
 # Kristin Precoda, Andrew H. Baird, Alisha Madsen, Toni Mizerek, Brigitte Sommer, Sheena N. Su, Joshua S. Madin
 
 library("xlsx")  # for read.csv
@@ -39,7 +39,7 @@ names(sex.size.w2)[ncol(sex.size.w2)] <- "size"
 
 # survival data from Withers 2000, table 3.4.  Will also add in this
 # study's survival data from growth data files (which were read in above)
-# set the size to the midpoint of the min and max of each size class
+# Set the size to the midpoint of the min and max of each size class
 survival.data.w <- read.csv("data/survival-size-Withers2000-Fairlight.csv")
 survival.data.w2 <- cbind(survival.data.w,
                           apply(survival.data.w[, 1:2], 1, mean))
@@ -48,7 +48,7 @@ names(survival.data.w2)[ncol(survival.data.w2)] <- "sizeRaw"
 # end: read in various types of data
 
 #####
-# process/transform data
+# process/transform data, and explicitly note data source
 
 # growth & survival data set
 # create single growth & survival data set with both 2011-2 and 2012-3 sizes
@@ -72,19 +72,24 @@ optimize(bcNLL, c(0.001, 1), x=x1, y=y1)$minimum
 
 transformtype <- 3
 
-# apply size transformation to growth data
+# apply size transformation to growth data, and add a column giving data source
 growth.data <- cbind(growth.data.r,
                      transformSize(growth.data.r$sizeRaw, transformtype),
                      transformSize(growth.data.r$sizeNextRaw, transformtype))
 names(growth.data) <- c("sizeRaw", "sizeNextRaw", "survival", "size", "sizeNext")
+growth.data$source <- factor("thisstudy", ordered=T,
+                             levels=c("thisstudy", "Madsen", "Withers", "bootstrap"))
 
 # sex & colony sizes
 # examined residuals of logistic regression of sex on colony size, with
 # various transforms of size; residuals looked best with untransformed size.
 # store transformed size data in sex.size for use in plotting; not used in analyses
+# add a column giving data source
 sex.size <- cbind(sex.size.1, transformSize(sex.size.1$colony_size, transformtype))
 names(sex.size) <- c("date", "sex", "sizeRaw", "size")
 sex.size$sex <- -1*(sex.size$sex - 2)      # remap so 1=F, 0=M
+sex.size$source <- factor("Madsen", ordered=T,
+                             levels=c("thisstudy", "Madsen", "Withers", "bootstrap"))
 
 # reproductivity & colony sizes
 # 0 = not reproductive, 1 = reproductive
@@ -101,14 +106,20 @@ repro.size <- data.frame(rbind(cbind(repro.w, sex.size.w2$size),
                                cbind(rep(1, 80), sex.size$sizeRaw),
                                cbind(rep(1, 106-80), bootstrap.repro),
                                cbind(rep(0, 140-106), bootstrap.nonrepro)))
-names(repro.size) <- c("reproductive", "size")
+repro.size$source <- factor(c(rep("Withers", length(repro.w)),
+                       rep("Madsen", 80),
+                       rep("bootstrap", 106-80),
+                       rep("bootstrap", 140-106)),
+                       ordered=T,
+                       levels=c("thisstudy", "Madsen", "Withers", "bootstrap"))
+names(repro.size) <- c("reproductive", "size", "source")
 # examined residuals of glm(reproductive ~ size, family=binomial, data=repro.size)
 # without transformation and with transformations; considerably closer to
 # normality using the same 1/6th root transform as in the growth model, and
 # also makes modelling a bit easier to have the same transform and not a
 # new one
 repro.size <- cbind(repro.size, transformSize(repro.size$size, transformtype))
-names(repro.size) <- c("reproductive", "sizeRaw", "size")
+names(repro.size) <- c("reproductive", "sizeRaw", "source", "size")
 
 # survival & colony sizes
 # examined residuals of glm(survival ~ size, family=binomial, data=surv.data) with
@@ -121,7 +132,11 @@ names(survival.data.w3)[ncol(survival.data.w3)] <- "size"
 
 surv.data <- data.frame(rbind(cbind(survival.data.w3$size, survival.data.w3$survival),
                               cbind(growth.data$size, growth.data$survival)))
-names(surv.data) <- c("size", "survival")
+surv.data$source <- factor(c(rep("Withers", nrow(survival.data.w3)),
+                             rep("thisstudy", nrow(growth.data))),
+                           ordered=T,
+                      levels=c("thisstudy", "Madsen", "Withers", "bootstrap"))
+names(surv.data) <- c("size", "survival", "source")
 
 # end: process/transform data
 
@@ -154,6 +169,13 @@ surv.mod <- glm(survival ~ 0 + size, family=binomial,
 summary(surv.mod)
 
 # end: build component models
+
+# calculate change in arithmetic mean radius, as an alternate measure of growth
+# this will be used only for comparison with growth rates reported in the literature
+amr1 <- sqrt(growth.data$sizeRaw/pi)
+amr2 <- sqrt(growth.data$sizeNextRaw/pi)
+summary(amr2 - amr1)
+# end: calculate change in arithmetic mean radius 
 
 #---------------------------------------------
 # setup for matrix representing IPM
@@ -324,11 +346,18 @@ elas <- matrix(as.vector(mat) * as.vector(sens)/lambda, nrow=mat.dim)
 
 ##### figures #######
 
+# fig. 1: 4-panel plot
 alltcks <- c(.35, 1, 10, 20, 50, 100, 250, 500, 1000, 1500)
 tcks <- alltcks[c(2, 3, 5:10)]    # ticks that will get labelled
 # plots of growth, survival, pr(f), pr(reproductive) functions
 xlim <- c(.5, 3.5)
 modelcolor <- "black"
+# set color and plot character according to data source
+sourcecolors <- c(rgb(0, 0, 0, maxColorValue = 255),
+                  rgb(0, 109, 219, maxColorValue = 255),
+                  rgb(36, 255, 36, maxColorValue = 255),
+                  rgb(255, 109, 182, maxColorValue = 255))
+sourcepch <- c(1, 2, 4, 0)
 
 postscript("figs/fig1.eps", horizontal=F, onefile=F, paper="special",
            width=8, height=8, pointsize=13)
@@ -337,7 +366,9 @@ par(mar=c(3.5, 4.5, 2, .2)+.1)
 par(mgp=c(3, 1, 0))
 plot(growth.data$size, growth.data$sizeNext, xlim=xlim, ylim=xlim,
      asp=1, xlab="",
-     ylab=expression(paste("Size (cm"^2, ") at time t+1")), axes=F)
+     ylab=expression(paste("Size (cm"^2, ") at time t+1")), axes=F,
+     col=sourcecolors[as.factor(growth.data$source)],
+     pch=sourcepch[as.factor(growth.data$source)])
 axis(1, at=tcks^(1/6), labels=paste(tcks), las=2)
 axis(2, at=tcks^(1/6), labels=paste(tcks), las=2)
 abline(a=grow.mod$coeff[1], b=grow.mod$coeff[2], col=modelcolor, lwd=3)
@@ -355,7 +386,9 @@ axis(2)
 par(new=T)
 set.seed(1234)
 plot(surv.data$size, surv.data$surv+rnorm(nrow(surv.data), 0, .026),
-     xlab="", ylab="", xlim=xlim, ylim=c(-.05, 1.05), cex=.9, axes=F)
+     xlab="", ylab="", xlim=xlim, ylim=c(-.05, 1.05), cex=.9, axes=F,
+     col=sourcecolors[as.factor(surv.data$source)],
+     pch=sourcepch[as.factor(surv.data$source)])
 legend(.0008^(1/6), 1.22, legend=c("(b)"), bty="n", xpd=NA)
 box()
 
@@ -369,7 +402,9 @@ par(new=T)
 set.seed(1234)
 plot(repro.size$size, repro.size$repro+rnorm(nrow(repro.size), 0, .026),
      xlim=xlim, ylim=c(-.05, 1.05), cex=.9,
-     xlab="", ylab="", axes=F)
+     xlab="", ylab="", axes=F,
+     col=sourcecolors[as.factor(repro.size$source)],
+     pch=sourcepch[as.factor(repro.size$source)])
 legend(.0008^(1/6), 1.22, legend=c("(c)"), bty="n", xpd=NA)
 box()
 
@@ -382,14 +417,17 @@ par(new=T)
 set.seed(1234)
 plot(sex.size$size, sex.size$sex+rnorm(nrow(sex.size), 0, .026),
      xlim=xlim, ylim=c(-.05, 1.05), cex=.9,
-     xlab="", ylab="", axes=F)
+     xlab="", ylab="", axes=F,
+     col=sourcecolors[as.factor(sex.size$source)],
+     pch=sourcepch[as.factor(sex.size$source)])
 legend(.0008^(1/6), 1.22, legend=c("(d)"), bty="n", xpd=NA)
 box()
 dev.off()
 par(mgp=c(3, 1, 0))
 par(mar=c(5, 4, 4, 2)+.1)
-# end: plots of growth, survival, pr(f), pr(reproductive) functions
+# end: fig. 1: plots of growth, survival, pr(f), pr(reproductive) functions
 
+# fig. 2: 4-panel plot
 # figure showing Q
 # note: below indices of qseq hold for qseq from 100 to 700 in 601 steps
 # (used mat.dim=800 in calculating this)
@@ -397,15 +435,16 @@ par(mar=c(5, 4, 4, 2)+.1)
 postscript("figs/fig2.eps", horizontal=F, onefile=F, paper="special",
            width=8, height=8, pointsize=12)
 par(mfrow=c(2, 2))
-par(mar=c(5, 3.7, 2, 4)+.1)
+par(mar=c(5, 3.85, 2, 4)+.1)
 plot(y[1:230], (Pr.female(y, tr=transformtype)*Pr.repro(y))[1:230],
-     xlab=expression(paste("Size (cm"^2, ")")), ylab="",
+     xlab=expression(paste("Size (cm"^2, ")")),
+     ylab="Probability of reproductive female",
      type="l", lwd=2, cex.lab=1.1, axes=F)
 axis(1, at=tcks^(1/6), labels=paste(tcks), las=2)
 axis(2)
 legend(.08^(1/6), .54, legend=c("(a)"), bty="n", cex=1.2, xpd=NA)
-mtext("Probability of reproductive female", 2, line=2.7, cex=.95)
 par(new=T)
+# purpose of the next plot command is to set up righthand y axis
 plot(y[1:230], (qbest*Pr.female(y, tr=transformtype)*Pr.repro(y))[1:230],
      xlab="", ylab="", axes=F,
      type="n", lwd=2)
@@ -413,8 +452,7 @@ axis(4, at=seq(0, .0150, by=.0050))
 abline(v=50^(1/6), lty=3)
 abline(v=100^(1/6), lty=3)
 abline(v=250^(1/6), lty=3)
-mtext(expression(paste("Recruits per cm"^2)), 4, line=2.7,
-      cex=.95)
+mtext(expression(paste("Recruits per cm"^2)), 4, line=2.7, cex=.95)
 box()
 
 par(mar=c(5, 4.5, 2, 2)+.1)
@@ -426,20 +464,22 @@ abline(v=qseq[which.max(ll)], lty=3)
 abline(v=qseq[108], lty=3)
 abline(v=qseq[501], lty=3)
 legend(.006, -1183, legend=c("(b)"), bty="n", cex=1.2, xpd=NA)
+# end figure showing Q
 
-par(mar=c(5, 3.7, 2, 4)+.1)
+# plot of recruits per colony weighted by stable size distribution
+par(mar=c(5, 3.85, 2, 4)+.1)
 plot(y[1:230], (qbest*Pr.female(y, tr=transformtype)*Pr.repro(y)*ssd*y^6)[1:230],
-     xlab=expression(paste("Size (cm"^2, ")")), ylab="",
+     xlab=expression(paste("Size (cm"^2, ")")),
+     ylab="Relative recruits under stable size distribution",
      type="l", lwd=2, cex.lab=1.1, axes=F)
 axis(1, at=tcks^(1/6), labels=paste(tcks), las=2)
+axis(2)
 abline(v=50^(1/6), lty=3)
 abline(v=100^(1/6), lty=3)
 abline(v=250^(1/6), lty=3)
-mtext("Relative recruits under", 2, line=2.7, cex=.95)
-mtext("stable size distribution", 2, line=1.4, cex=.95)
 legend(.08^(1/6), .0037, legend=c("(c)"), bty="n", cex=1.2, xpd=NA)
 box()
-# end figure showing Q
+# end plot of recruits per colony weighted by stable size distribution
 
 # plot of recruits per colony
 par(mar=c(5, 4.5, 2, 2)+.1)
@@ -456,8 +496,10 @@ box()
 legend(.08^(1/6), 2.83, legend=c("(d)"), bty="n", cex=1.2, xpd=NA)
 dev.off()
 # end plot of recruits per colony
+# end 4-panel fig. 2
 par(mar=c(5, 4, 4, 2)+.1)
 
+# fig. 3: 4-panel plot
 # figure showing stable size distribution & empirical size structure
 # with CI around ssd based on CI for Q
 # ssd and confidence interval around it (based on CI around Q)
@@ -480,20 +522,22 @@ lambda.ciu <- Pvers.eigen.ciu[[1]]
 ssd.ciu <- as.vector(Pvers.eigen.ciu[[2]])
 
 finalfigure <- F
-if (finalfigure) 
-  tiff("figs/fig3.tif", pointsize=48, width=2000, height=2000, antialias="none", compression="lzw")
+if (finalfigure)    # pdf is a much larger file, so use only for final figure
+  pdf("figs/fig3.pdf", width=6, height=6, onefile=F, pointsize=12, compress=F)
 if (!finalfigure) 
-  png(file="figs/fig3.png", pointsize=62, width=2500, height=2500, antialias="none")
+  png(file="figs/fig3.png", pointsize=54, width=1800, height=1800, antialias="none")
 colorfigure <- T
 if (colorfigure)
   colshades <- tim.colors()
 if (!colorfigure)
   colshades <- grey.colors(33,start=.9,end=0.1)
-par(mfrow=c(2, 2))
-par(mar=c(5, 4.5, 1.5, 3.5)+.1)
+par(mar=c(5, 4, 4, 2)+.1)
+layout(matrix(c(1, 1, 2, 3, 4, 5, 6, 7), nrow=2, ncol=4, byrow=T),
+       widths=c(7, 1, 7, 1))
+par(mar=c(5, 5.5, 2.7, 4.5)+.1)
 plot(M$meshpts, ssd, type='l', lwd=2, lty=4,
      xlab=expression(paste("Size (cm"^2, ")")),
-     ylab="IPM stable size distribution",
+     ylab="Density under\nIPM stable size distribution",
      xlim=c(minsize, 3.5),
      ylim=range(ssd[-1]), axes=F)
 axis(1, at=alltcks^(1/6), labels=paste(alltcks), las=2)
@@ -506,7 +550,7 @@ hist(transformSize(size.struct[, 2], transformtype), breaks=20,
      xlim=c(minsize, 3.5), axes=F, ylab="", xlab="", main="", freq=F,
      ylim=c(min(ssd[-1]), 1.11428571*2.023406))
 axis(4, at=seq(0, 2, by=.2))
-mtext("Empirical size structure", 4, line=2.2, cex=0.85)
+mtext("Density under empirical size structure", 4, line=2.7, cex=0.68)
 abline(v=transformSize(minreliablesize, transformtype), col="black",
        lwd=2, lty=3)
 legend(.08^(1/6), 2.7, legend=c("(a)"), bty="n", cex=1.2, xpd=NA)
@@ -514,16 +558,14 @@ par(mar=c(5, 4, 4, 2)+.1)
 # end: figure showing stable size distribution & empirical size structure
 
 # plot kernel matrix (K in literature; mat here)
-par(mar=c(5, 4.7, 1, 2.5)+.1)
-par(mar=c(5, 4.7, 1.5, 2)+.1)
+par(mar=c(5, 4.7, 2.7, 0)+.1)
 broaden.recruits <- c(rep(1, 3), 2:length(y))
 y.broaden.recruits <- c(seq(y[1]*.9, y[1]*.99, length=2), y)
 image(y.broaden.recruits, y.broaden.recruits,
       t(log(mat))[broaden.recruits, broaden.recruits],
       xlab=expression(paste("Size (cm"^2, ") at time t")),
       ylab=expression(paste("Size (cm"^2, ") at time t+1")),
-      col=colshades,
-      axes=F, asp=1)
+      col=colshades, axes=F, asp=1)
 axis(1, at=alltcks^(1/6), labels=paste(alltcks), las=2)
 axis(2, at=alltcks^(1/6), labels=paste(alltcks), las=2)
 lines(x=c(y[1], y.broaden.recruits[length(y.broaden.recruits)]),
@@ -532,13 +574,17 @@ lines(y=c(y[1], y.broaden.recruits[length(y.broaden.recruits)]),
       x=rep(y[1], 2), col="white", lwd=1)
 abline(a=0, b=1, col="white", lty=1, lwd=1.5)
 legend(.08^(1/6), 3100^(1/6), legend=c("(b)"), bty="n", cex=1.2, xpd=NA)
+
+par(mar=c(5.05, 0, 2.7, 2)+.1)
+image.scale(as.vector(log(mat)[broaden.recruits, broaden.recruits]),
+            col=colshades, axis.pos=4, logprob=T)
 # end plot kernel matrix (K in literature; mat here)
 
 # plot elasticity & sensitivity: with recruits emphasized and diagonal line
 # the axes are just at the edges of the plots if the 
 # aspect ratio of the plot is just right, and away from the 
 # plots otherwise
-par(mar=c(5, 4.7, 1.5, 2)+.1)
+par(mar=c(5, 4.7, 2.7, 0)+.1)
 broaden.recruits <- c(rep(1, 2), 2:length(y))
 y.broaden.recruits <- c(seq(y[1]*.9, y[1]*.99, length=2), y)
 # rows of sens are size at time t+1, cols at time t
@@ -546,8 +592,7 @@ image(y.broaden.recruits, y.broaden.recruits,
       t(log(sens))[broaden.recruits, broaden.recruits],
       xlab=expression(paste("Size (cm"^2, ") at time t")),
       ylab=expression(paste("Size (cm"^2, ") at time t+1")),
-      col=colshades,
-      axes=F, asp=1)
+      col=colshades, axes=F, asp=1)
 axis(1, at=alltcks^(1/6), labels=paste(alltcks), las=2)
 axis(2, at=alltcks^(1/6), labels=paste(alltcks), las=2)
 lines(x=c(y[1], y.broaden.recruits[length(y.broaden.recruits)]),
@@ -557,12 +602,16 @@ lines(y=c(y[1], y.broaden.recruits[length(y.broaden.recruits)]),
 abline(a=0, b=1, col="white", lty=1, lwd=1.5)
 legend(.08^(1/6), 3100^(1/6), legend=c("(c)"), bty="n", cex=1.2, xpd=NA)
 
+par(mar=c(5.05, 0, 2.7, 2)+.1)
+image.scale(as.vector(log(sens)[broaden.recruits, broaden.recruits]),
+            col=colshades, axis.pos=4, logprob=T)
+
+par(mar=c(5, 4.7, 2.7, 0)+.1)
 image(y.broaden.recruits, y.broaden.recruits,
            t(log(elas))[broaden.recruits, broaden.recruits],
       xlab=expression(paste("Size (cm"^2, ") at time t")),
       ylab=expression(paste("Size (cm"^2, ") at time t+1")),
-      col=colshades,
-      axes=F, asp=1)
+      col=colshades, axes=F, asp=1)
 axis(1, at=alltcks^(1/6), labels=paste(alltcks), las=2)
 axis(2, at=alltcks^(1/6), labels=paste(alltcks), las=2)
 par(new=T)
@@ -572,10 +621,16 @@ lines(y=c(y[1], y.broaden.recruits[length(y.broaden.recruits)]),
       x=rep(y[1], 2), col="white", lwd=1)
 abline(a=0, b=1, col="white", lty=1, lwd=1.5)
 legend(.08^(1/6), 3100^(1/6), legend=c("(d)"), bty="n", cex=1.2, xpd=NA)
+
+par(mar=c(5.05, 0, 2.7, 2)+.1)
+image.scale(as.vector(log(elas)[broaden.recruits, broaden.recruits]),
+            col=colshades, axis.pos=4, logprob=T)
+
 dev.off()
 # end plot elasticity & sensitivity: with recruits emphasized
+# end 4-panel fig. 3
 
-# plot elasticity results for each param
+# plot elasticity results for each param: fig 2A
 postscript("figs/fig2A.eps", horizontal=F, onefile=F, paper="special",
            width=6, height=3.5, pointsize=10)
 par(mfrow=c(1, 2))
