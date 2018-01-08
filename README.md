@@ -2,7 +2,7 @@
 code and data for IPM for Plesiastrea versipora population
 
 Accompanies:
-How does a widespread reef coral maintain populations in isolated environments? 
+How does a widespread reef coral maintain a population in an isolated environment? 
 
 Kristin Precoda(1), Andrew H. Baird(2), Alisha Madsen(1), Toni Mizerek(1,3), Brigitte Sommer(4), Sheena N. Su(1), Joshua S. Madin(1)
 
